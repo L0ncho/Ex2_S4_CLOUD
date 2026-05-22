@@ -52,12 +52,19 @@ src/main/resources/
 ./run-local.sh
 ```
 
-**Perfil `prod` (Oracle)** — crear `.env` desde `.env.example` con credenciales Oracle:
+**Perfil `prod` (Oracle + wallet mTLS)** — coloca la wallet descargada en `Wallet_ENROLLMENTPLATFORMDB/` (incluye `tnsnames.ora`, `sqlnet.ora`, `ewallet.pem`), crea `.env` y arranca:
 
 ```bash
 cp .env.example .env
+# Edita .env: usuario/contraseña de la BD y, si quieres, el alias TNS (por defecto enrollmentplatformdb_high)
 ./run-prod.sh
 ```
+
+`run-prod.sh` configura `TNS_ADMIN` y `ORACLE_WALLET_DIR` apuntando a la wallet; la URL JDBC usa el alias del `tnsnames.ora` (mTLS, sin pegar el descriptor completo en `.env`).
+
+La wallet debe incluir `cwallet.sso` (y `tnsnames.ora`). El proyecto declara `oraclepki` en el `pom.xml` para que el driver JDBC pueda abrir el keystore SSO (`ORA-17957` / `SSO KeyStore not available` si falta).
+
+Alias típicos: `enrollmentplatformdb_high`, `enrollmentplatformdb_medium`, `enrollmentplatformdb_low`.
 
 Base URL: `http://localhost:8080`
 
