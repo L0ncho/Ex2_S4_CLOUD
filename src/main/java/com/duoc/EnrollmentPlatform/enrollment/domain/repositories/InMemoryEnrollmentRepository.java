@@ -1,0 +1,13 @@
+package com.duoc.enrollmentplatform.enrollment.domain.repositories;
+
+import com.duoc.enrollmentplatform.enrollment.domain.entities.Enrollment;
+import com.duoc.enrollmentplatform.shared.domain.valueobjects.Id;
+
+import java.util.*;
+
+public class InMemoryEnrollmentRepository implements EnrollmentRepository {
+    private final Map<String, Enrollment> enrollments = new HashMap<>();
+
+    @Override public void save(Enrollment enrollment) { enrollments.put(enrollment.getId().getValue(), enrollment); }
+    @Override public Optional<Enrollment> findById(Id id) { return Optional.ofNullable(enrollments.get(id.getValue())); }
+}
