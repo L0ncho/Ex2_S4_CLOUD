@@ -10,9 +10,6 @@ on:
     branches:
       - main
 
-env:
-  IMAGE_NAME: enrollment-platform
-
 jobs:
   # En PR y en push: solo validamos que el proyecto compile y pase los tests (H2).
   test:
@@ -39,7 +36,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     env:
-      IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+      IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/enrollment-platform:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
