@@ -1,4 +1,14 @@
 services:
+  localstack:
+    image: localstack/localstack:4.4.0
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+    volumes:
+      - localstack-data:/var/lib/localstack
+
   enrollment-platform:
     build:
       context: .
@@ -12,3 +22,8 @@ services:
       ORACLE_WALLET_DIR: /app/wallet
       TNS_ADMIN: /app/wallet
     restart: always
+    depends_on:
+      - localstack
+
+volumes:
+  localstack-data:

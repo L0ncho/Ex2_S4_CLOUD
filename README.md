@@ -31,8 +31,10 @@ src/main/java/com/duoc/enrollmentplatform/
 │   └── infrastructure/     # JpaCourseRepository, CourseController
 ├── enrollment/
 │   ├── domain/             # Student, Enrollment, EnrollmentLine, repos + InMemory
-│   ├── application/        # CreateEnrollmentUseCase, EnrollmentSummaryDTO
-│   └── infrastructure/     # JPA adapters, EnrollmentController
+│   ├── application/        # CRUD inscripciones (use cases + DTOs)
+│   │   ├── summary/        # Resúmenes JSON/PDF y S3 (use cases)
+│   │   └── ports/          # EnrollmentSummaryStorage, PdfRenderer
+│   └── infrastructure/     # JPA/S3 adapters, EnrollmentController, EnrollmentSummaryController
 └── factory/                # EnrollmentPlatformFactory, ApplicationConfiguration
 
 src/main/resources/
@@ -68,13 +70,27 @@ Alias típicos: `enrollmentplatformdb_high`, `enrollmentplatformdb_medium`, `enr
 
 Base URL: `http://localhost:8080`
 
-| Método | URL                | Descripción                  |
-| ------ | ------------------ | ---------------------------- |
-| GET    | `/courses`         | Lista cursos                 |
-| POST   | `/courses`         | Crea curso                   |
-| POST   | `/enrollments`     | Inscribe estudiante          |
-| GET    | `/actuator/health` | Health check                 |
-| GET    | `/h2-console`      | Consola H2 (solo perfil local) |
+| Método | URL                                      | Descripción                              |
+| ------ | ---------------------------------------- | ---------------------------------------- |
+| GET    | `/courses`                               | Lista cursos                             |
+| POST   | `/courses`                               | Crea curso                               |
+| POST   | `/enrollments`                           | Inscribe estudiante (sube resumen a S3)  |
+| GET    | `/enrollments`                           | Lista inscripciones                      |
+| GET    | `/enrollments/{id}`                      | Obtiene inscripción                      |
+| PUT    | `/enrollments/{id}`                      | Actualiza cursos de la inscripción       |
+| DELETE | `/enrollments/{id}`                      | Elimina inscripción y resumen en S3      |
+| GET    | `/enrollments/summaries`                 | Lista resúmenes almacenados en S3        |
+| GET    | `/enrollments/{id}/summary/file`         | Genera JSON descargable (sin S3)         |
+| POST   | `/enrollments/{id}/summary`              | Sube o reemplaza resumen en S3           |
+| GET    | `/enrollments/{id}/summary`              | Descarga resumen (`?format=pdf` opcional)|
+| PUT    | `/enrollments/{id}/summary`              | Reemplaza JSON del resumen en S3         |
+| DELETE | `/enrollments/{id}/summary`              | Elimina resumen en S3                    |
+| GET    | `/actuator/health`                       | Health check                             |
+| GET    | `/h2-console`                            | Consola H2 (solo perfil local)           |
+
+Los resúmenes se guardan en S3 como `{enrollmentId}/summary.json`. Detalle en [docs/almacenamiento-s3-resumenes.md](docs/almacenamiento-s3-resumenes.md).
+
+Variables mínimas: `AWS_REGION`, `AWS_S3_BUCKET`; en local con LocalStack también `AWS_S3_ENDPOINT` (ver `.env.example`).
 
 ## Ejecutar tests
 
@@ -149,6 +165,16 @@ Respuesta `201`:
   "totalAmount": 270000.0
 }
 ```
+
+### PUT /enrollments/{enrollmentId}
+
+Body (solo `courseIds`; el `studentId` no cambia):
+
+```json
+{ "courseIds": ["c-001", "c-003"] }
+```
+
+Si existe resumen en S3, se regenera y reemplaza automáticamente.
 
 ## Producción con Docker
 

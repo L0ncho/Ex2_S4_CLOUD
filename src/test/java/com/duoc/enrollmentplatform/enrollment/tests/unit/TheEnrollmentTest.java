@@ -24,4 +24,23 @@ class TheEnrollmentTest {
         assertEquals(DomainError.Type.VALIDATION,
                 assertThrows(DomainError.class, () -> Enrollment.create(Id.generate(), Id.generate(), List.of())).getType());
     }
+
+    @Test void recalculatesTotalAfterReplacingLines() {
+        var initialLines = List.of(
+                EnrollmentLine.create(Id.generate(), Id.generate(), "Intro Java", Money.create(150000)));
+        Enrollment enrollment = Enrollment.create(Id.generate(), Id.generate(), initialLines);
+        var newLines = List.of(
+                EnrollmentLine.create(Id.generate(), Id.generate(), "Cloud Native", Money.create(180000)),
+                EnrollmentLine.create(Id.generate(), Id.generate(), "Bases de datos", Money.create(120000)));
+        enrollment.replaceLines(newLines);
+        assertEquals(300000, enrollment.calculateTotal().getValue());
+        assertEquals(2, enrollment.getLines().size());
+    }
+
+    @Test void rejectsReplacingLinesWithEmptyList() {
+        Enrollment enrollment = Enrollment.create(Id.generate(), Id.generate(), List.of(
+                EnrollmentLine.create(Id.generate(), Id.generate(), "Intro Java", Money.create(150000))));
+        assertEquals(DomainError.Type.VALIDATION,
+                assertThrows(DomainError.class, () -> enrollment.replaceLines(List.of())).getType());
+    }
 }

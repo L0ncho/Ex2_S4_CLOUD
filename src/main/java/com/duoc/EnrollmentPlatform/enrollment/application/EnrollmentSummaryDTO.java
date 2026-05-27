@@ -9,7 +9,9 @@ public class EnrollmentSummaryDTO {
     public double totalAmount;
 
     public EnrollmentSummaryDTO(String enrollmentId, String studentId, List<EnrollmentLineDTO> lines, double totalAmount) {
-        this.enrollmentId = enrollmentId; this.studentId = studentId;
-        this.lines = lines; this.totalAmount = totalAmount;
+        this.enrollmentId = enrollmentId;
+        this.studentId = studentId;
+        this.lines = lines;
+        this.totalAmount = totalAmount;
     }
 }

@@ -14,30 +14,33 @@ import com.duoc.enrollmentplatform.shared.domain.valueobjects.Id;
 
 import java.util.List;
 
-public class CreateEnrollmentUseCase {
+public class UpdateEnrollmentUseCase {
     private final CourseRepository courseRepository;
-    private final StudentRepository studentRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final StudentRepository studentRepository;
     private final EnrollmentSummaryGenerator summaryGenerator;
     private final EnrollmentSummaryStorage summaryStorage;
     private final EnrollmentDtoMapper mapper;
 
-    public CreateEnrollmentUseCase(CourseRepository courseRepository,
-                                   StudentRepository studentRepository,
+    public UpdateEnrollmentUseCase(CourseRepository courseRepository,
                                    EnrollmentRepository enrollmentRepository,
+                                   StudentRepository studentRepository,
                                    EnrollmentSummaryGenerator summaryGenerator,
                                    EnrollmentSummaryStorage summaryStorage) {
         this.courseRepository = courseRepository;
-        this.studentRepository = studentRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.studentRepository = studentRepository;
         this.summaryGenerator = summaryGenerator;
         this.summaryStorage = summaryStorage;
         this.mapper = new EnrollmentDtoMapper();
     }
 
-    public EnrollmentSummaryDTO execute(String studentId, List<String> courseIds) {
-        Student student = studentRepository.findById(Id.create(studentId))
-                .orElseThrow(() -> DomainError.notFound("Student " + studentId + " not found"));
+    public EnrollmentSummaryDTO execute(String enrollmentId, List<String> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            throw DomainError.validation("Enrollment must include at least one course");
+        }
+        Enrollment enrollment = enrollmentRepository.findById(Id.create(enrollmentId))
+                .orElseThrow(() -> DomainError.notFound("Enrollment " + enrollmentId + " not found"));
 
         List<EnrollmentLine> lines = courseIds.stream()
                 .map(courseId -> {
@@ -47,11 +50,14 @@ public class CreateEnrollmentUseCase {
                 })
                 .toList();
 
-        Enrollment enrollment = Enrollment.create(Id.generate(), Id.create(studentId), lines);
+        enrollment.replaceLines(lines);
         enrollmentRepository.save(enrollment);
 
-        String enrollmentId = enrollment.getId().getValue();
-        summaryStorage.upload(enrollmentId, summaryGenerator.toJsonBytes(enrollment, student));
+        if (summaryStorage.exists(enrollmentId)) {
+            Student student = studentRepository.findById(enrollment.getStudentId())
+                    .orElseThrow(() -> DomainError.notFound("Student " + enrollment.getStudentId().getValue() + " not found"));
+            summaryStorage.replace(enrollmentId, summaryGenerator.toJsonBytes(enrollment, student));
+        }
 
         return mapper.toSummaryDto(enrollment);
     }

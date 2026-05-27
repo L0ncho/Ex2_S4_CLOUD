@@ -13,7 +13,7 @@ import java.util.Map;
 public class Enrollment {
     private final Id id;
     private final Id studentId;
-    private final List<EnrollmentLine> lines;
+    private List<EnrollmentLine> lines;
     private final LocalDateTime enrolledAt;
 
     private Enrollment(Id id, Id studentId, List<EnrollmentLine> lines, LocalDateTime enrolledAt) {
@@ -28,6 +28,13 @@ public class Enrollment {
 
     public static Enrollment reconstitute(Id id, Id studentId, List<EnrollmentLine> lines, LocalDateTime enrolledAt) {
         return new Enrollment(id, studentId, lines, enrolledAt);
+    }
+
+    public void replaceLines(List<EnrollmentLine> newLines) {
+        if (newLines == null || newLines.isEmpty()) {
+            throw DomainError.validation("Enrollment must include at least one course");
+        }
+        this.lines = List.copyOf(newLines);
     }
 
     public Money calculateTotal() {

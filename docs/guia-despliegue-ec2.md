@@ -26,10 +26,22 @@ Configurar en **Settings → Secrets and variables → Actions**:
 | `EC2_HOST` | IP pública de la instancia EC2 |
 | `USER_SERVER` | Usuario SSH: `ubuntu` (Ubuntu) o `ec2-user` (Amazon Linux) |
 | `EC2_SSH_KEY` | Contenido del archivo `.pem` (líneas `BEGIN` a `END` inclusive) |
-| `AWS_ACCESS_KEY_ID` | Access key AWS (requerido por el workflow) |
-| `AWS_SECRET_ACCESS_KEY` | Secret key AWS |
+| `AWS_ACCESS_KEY_ID` | Access key IAM con permisos S3 sobre el bucket de resúmenes |
+| `AWS_SECRET_ACCESS_KEY` | Secret key IAM |
 | `AWS_SESSION_TOKEN` | Credenciales STS temporales; omitir si no aplica |
+| `AWS_REGION` | Región del bucket S3 (ej. `us-east-1`) |
+| `AWS_S3_BUCKET` | Bucket donde se guardan los resúmenes (`{enrollmentId}/summary.json`) |
 | `SPRING_DATASOURCE_URL` | Opcional. Por defecto: `jdbc:oracle:thin:@enrollmentplatformdb_high` |
+
+### S3 en producción
+
+1. Crear el bucket en la misma región que `AWS_REGION`.
+2. Asignar al IAM de las credenciales permisos `s3:PutObject`, `GetObject`, `DeleteObject` y `ListBucket` sobre ese bucket.
+3. Configurar los secrets `AWS_S3_BUCKET` y `AWS_REGION` en GitHub Actions.
+
+Política de ejemplo y formato del resumen: [almacenamiento-s3-resumenes.md](almacenamiento-s3-resumenes.md).
+
+No definir `AWS_S3_ENDPOINT` en producción; el SDK usa el endpoint regional de AWS.
 
 ### Generar `ORACLE_WALLET_BASE64`
 
@@ -108,11 +120,11 @@ Errores de despliegue: revisar el job `build-and-deploy` en **Actions** del repo
 
 ## Resumen
 
-| Entorno | Wallet | Credenciales Oracle |
-| ------- | ------ | --------------------- |
-| Local | `Wallet_ENROLLMENTPLATFORMDB/` | `.env` |
-| GitHub | `ORACLE_WALLET_BASE64` | `SPRING_DATASOURCE_*` |
-| EC2 | Imagen Docker (`/app/wallet`) | Variables en `docker run` (workflow) |
+| Entorno | Wallet | Credenciales Oracle | S3 |
+| ------- | ------ | --------------------- | --- |
+| Local | `Wallet_ENROLLMENTPLATFORMDB/` | `.env` | `.env` + LocalStack opcional |
+| GitHub | `ORACLE_WALLET_BASE64` | `SPRING_DATASOURCE_*` | `AWS_S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_*` |
+| EC2 | Imagen Docker (`/app/wallet`) | Variables en `docker run` (workflow) | Mismas variables S3 en `docker run` |
 
 ---
 

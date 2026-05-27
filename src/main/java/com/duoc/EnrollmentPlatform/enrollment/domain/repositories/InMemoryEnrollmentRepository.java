@@ -10,4 +10,6 @@ public class InMemoryEnrollmentRepository implements EnrollmentRepository {
 
     @Override public void save(Enrollment enrollment) { enrollments.put(enrollment.getId().getValue(), enrollment); }
     @Override public Optional<Enrollment> findById(Id id) { return Optional.ofNullable(enrollments.get(id.getValue())); }
+    @Override public List<Enrollment> findAll() { return List.copyOf(enrollments.values()); }
+    @Override public void deleteById(Id id) { enrollments.remove(id.getValue()); }
 }

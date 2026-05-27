@@ -28,6 +28,16 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
     @Override
     public Optional<Enrollment> findById(Id id) { return store.findById(id.getValue()).map(this::toDomain); }
 
+    @Override
+    public List<Enrollment> findAll() {
+        return store.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public void deleteById(Id id) {
+        store.deleteById(id.getValue());
+    }
+
     private Enrollment toDomain(EnrollmentRecord r) {
         List<EnrollmentLine> lines = r.lines.stream()
                 .map(l -> EnrollmentLine.create(Id.create(l.id), Id.create(l.courseId),
